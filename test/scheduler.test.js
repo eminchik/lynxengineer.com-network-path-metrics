@@ -1,0 +1,11 @@
+import {test} from 'node:test';
+import assert from 'node:assert/strict';
+import {readFile} from 'node:fs/promises';
+import vm from 'node:vm';
+import {setTimeout as delay} from 'node:timers/promises';
+const scope={AbortController,setTimeout,clearTimeout,Date};vm.createContext(scope);vm.runInContext(await readFile(new URL('../public/scheduler.js',import.meta.url),'utf8'),scope);
+const Scheduler=scope.LynxScheduler;
+test('scheduled repeat serializes runs and stops after cancellation',async()=>{const s=new Scheduler();let active=0,max=0,runs=0;await s.start({mode:'scheduled',delay:2,run:async()=>{active++;max=Math.max(max,active);await delay(8);runs++;active--;},onCycle:()=>{if(runs===3)s.stop();}});assert.equal(runs,3);assert.equal(max,1);assert.equal(s.running,false);});
+test('stop cancels a future start without running probes',async()=>{const s=new Scheduler();let calls=0;const p=s.start({mode:'scheduled',delay:10,startAt:Date.now()+60000,run:async()=>calls++});setTimeout(()=>s.stop(),10);await p;assert.equal(calls,0);assert.equal(s.running,false);});
+test('continuous repeats without a cycle limit and stops on request',async()=>{const s=new Scheduler();let calls=0;await s.start({mode:'continuous',run:async()=>calls++,onCycle:()=>{if(calls===2)s.stop();}});assert.equal(calls,2);});
+test('single run and measurement errors do not restart',async()=>{const s=new Scheduler();let calls=0;await s.start({mode:'once',run:async()=>calls++});await s.start({mode:'scheduled',delay:1,run:async()=>calls++,onCycle:()=>false});assert.equal(calls,2);});
