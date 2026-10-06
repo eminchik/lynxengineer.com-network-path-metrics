@@ -1,0 +1,2 @@
+Lynx Path helps network engineers investigate slow connections, intermittent outages, and unstable network paths from one dashboard. It combines ping and traceroute results with charts, independent tabs, and repeated testing.
+When a user says “the application is slow,” a single successful ping tells you very little. Lynx Path helps you observe whether response times remain stable, packets go unanswered, or the observed route changes between tests.
